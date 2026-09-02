@@ -1,5 +1,42 @@
 # Coldstart — Teak Email
 
+## 2026-09-02 — GIT REPOSITORY INITIALIZED
+
+### Status: LOCAL COMMIT COMPLETE — Push pending (GitHub repo needs creation)
+
+### GitHub Repository
+- **URL**: https://github.com/emerilansel-jpg/mail-admin-pesat
+- **Remote**: `origin` -> `https://github.com/emerilansel-jpg/mail-admin-pesat.git`
+- **Branch**: `master`
+- **Commit**: `3f2c73b` (initial commit, 115 files, 15022 insertions)
+
+### Push Status
+- **Result**: BLOCKED — GitHub repository does not exist yet. `gh` CLI not authenticated.
+- **Action needed**: Create repo on GitHub (via web UI or `gh auth login` + `gh repo create`), then `git push -u origin master`
+
+### Security Scan (Pre-commit)
+- **Secrets excluded**: `.ops/` (SSH private key `id_ed25519_ops`, `secrets.env` with VNC_PASSWORD/ROOT_PW), `app/src/config.php` (production credentials)
+- **Files scanned**: All 115 staged files checked for hardcoded secrets (API keys, passwords, private keys)
+- **Result**: CLEAN — No secrets in committed code. `config.example.php` (template only) is safe.
+- **Scripts checked**: `vnc_*.js`, `extract_pw.js`, `get_password.js`, `ticket_*.js` — all read secrets from env vars or UI, none hardcoded
+
+### Files Included (115)
+- All PHP source: `app/src/`, `app/public/` (42 files)
+- Nginx configs: `app/nginx/`
+- MCP server: `app/mcp-server/`
+- Scripts: `app/scripts/`, `scripts/` (VNC automation, ticket helpers)
+- Docs: `README.md`, `VERSIONS.md`, `PRD-v1.0.md`, `BUSINESS-CONTEXT.md`, `coldstart/`, `.zcode/skills/`
+- DB schema: `app/schema.sql`
+- Deploy: `pitch-deck.html`, `pitch-deck.pdf`
+
+### Files Excluded (.gitignore)
+- `.ops/` — SSH keys, VNC/root passwords, secrets.env
+- `app/src/config.php` — production database/mail credentials
+- `.mimosa/`, `.playwright-mcp/` — tool caches
+- `*.env`, `*.key`, `*.pem` — any future secrets
+
+---
+
 ## 2026-08-29 — UX OVERHAUL + TIER UPGRADE + SENDER CHANGE + MCP SKILL
 
 ### Status: COMPLETE — All 4 tasks done, 42/42 PHP syntax pass, all endpoints verified

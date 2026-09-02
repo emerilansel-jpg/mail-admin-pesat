@@ -1,5 +1,22 @@
 # Teak Email — Version History
 
+## Git Repository Initialized — 2026-09-02
+
+### Status: LOCAL COMMIT COMPLETE — Push pending
+
+### Repository Info
+- **GitHub URL**: https://github.com/emerilansel-jpg/mail-admin-pesat
+- **Branch**: `master`
+- **Commit**: `3f2c73b` (initial commit)
+- **Files**: 115 committed, 15022 insertions
+- **Push**: BLOCKED — GitHub repo needs creation + `gh auth login`
+
+### Security
+- Secrets excluded: `.ops/` (SSH keys, passwords), `app/src/config.php`
+- All committed files scanned: CLEAN (no hardcoded secrets)
+
+---
+
 ## UX Overhaul + Tier Upgrade + Sender Change + MCP Skill — 2026-08-29
 
 ### Status: COMPLETE — All 4 tasks done, 42/42 PHP syntax pass, all endpoints verified
