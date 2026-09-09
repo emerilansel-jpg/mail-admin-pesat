@@ -153,16 +153,20 @@ switch ($segment) {
 
     case 'domains':
         if ($method === 'GET') {
-            // AI agent: list user's custom domains (not global pool)
+            // List domains eligible for inbox creation
+            // Excludes jetdigitalpro.com (blocked) and conflict/unknown user domains
             $domains = custom_domain_list($uid);
             $safeDomains = custom_domain_safe($uid);
             $summary = custom_domain_summary($uid);
+            $eligible = inbox_eligible_domains($uid);
             api_json([
                 'ok' => true,
-                'domains' => $domains,
-                'safe_domains' => $safeDomains,
-                'pool_domains' => cfg()['pool_domains'],
-                'summary' => $summary,
+                'eligible'     => $eligible['all'],     // domains you can actually create inboxes on
+                'pool_domains' => $eligible['pool'],    // shared pool (excl. blocked)
+                'custom_domains' => $eligible['custom'],// your verified custom domains
+                'domains'      => $domains,              // full user domain list (all classifications)
+                'safe_domains' => $safeDomains,         // all verified user domains (may include blocked)
+                'summary'      => $summary,
             ]);
         }
         if ($method === 'POST') {

@@ -9,10 +9,74 @@ require_once __DIR__ . '/credits.php';
 require_once __DIR__ . '/mailcow.php';
 require_once __DIR__ . '/abuse.php';
 require_once __DIR__ . '/redeem.php';
+require_once __DIR__ . '/custom_domains.php';
 
 const CREDIT_EMAIL_RECEIVED = 1;
 const CREDIT_INBOX_ACTIVE_DAY = 2;
 const CREDIT_API_25_CALLS = 1;
+
+/**
+ * Domains permanently blocked from new inbox creation.
+ * Existing mailboxes on these domains are untouched.
+ */
+const INBOX_BLOCKED_DOMAINS = ['jetdigitalpro.com'];
+
+/**
+ * Check if a domain is eligible for inbox creation for a given user.
+ *
+ * A domain is eligible when ALL of the following are true:
+ *   1. It is NOT in the blocked list (INBOX_BLOCKED_DOMAINS).
+ *   2. It is active in Mailcow (virtual transport can deliver to it).
+ *   3. EITHER it is in the shared pool (excluding blocked domains),
+ *      OR it is a verified/safe user-owned domain in ia_user_domains.
+ *
+ * @return array ['ok' => true] on success, ['error' => '...'] on failure
+ */
+function inbox_domain_eligible(int $uid, string $domain): array {
+    // 1. Block permanently excluded domains
+    if (in_array($domain, INBOX_BLOCKED_DOMAINS, true)) {
+        return ['error' => 'This domain is not available for new inboxes'];
+    }
+
+    // 2. Must be active in Mailcow (virtual transport configured)
+    if (!mailcow_domain_active($domain)) {
+        return ['error' => 'Domain is not configured on the mail server'];
+    }
+
+    // 3a. Check shared pool (jetdigitalpro.com already excluded by blocked list above)
+    $pool = cfg()['pool_domains'];
+    if (in_array($domain, $pool, true)) {
+        return ['ok' => true];
+    }
+
+    // 3b. Check user-owned verified domains in ia_user_domains
+    if (custom_domain_is_safe($uid, $domain)) {
+        return ['ok' => true];
+    }
+
+    return ['error' => 'Domain not available. Use a pool domain or a verified custom domain.'];
+}
+
+/**
+ * Get all domains eligible for inbox creation for a given user.
+ * Used by API /api/domains and the UI dropdown.
+ *
+ * @return array ['pool' => [...], 'custom' => [...], 'all' => [...]]
+ */
+function inbox_eligible_domains(int $uid): array {
+    $blocked = INBOX_BLOCKED_DOMAINS;
+
+    // Pool domains (excluding blocked)
+    $pool = array_values(array_filter(cfg()['pool_domains'], fn($d) => !in_array($d, $blocked, true)));
+
+    // User's verified custom domains (excluding blocked)
+    $custom = array_values(array_filter(custom_domain_safe($uid), fn($d) => !in_array($d, $blocked, true)));
+
+    // Combined unique list
+    $all = array_values(array_unique(array_merge($pool, $custom)));
+
+    return ['pool' => $pool, 'custom' => $custom, 'all' => $all];
+}
 
 /**
  * Buat inbox baru.
@@ -33,9 +97,10 @@ function inbox_create(int $uid, string $domain, string $local_part, int $tier): 
         return ['error' => 'Invalid local part'];
     }
 
-    // Domain must be from pool and active in Mailcow
-    if (!in_array($domain, cfg()['pool_domains'], true) || !mailcow_domain_active($domain)) {
-        return ['error' => 'Domain not available in pool'];
+    // Domain eligibility: pool (excl. blocked) OR verified user-owned domain
+    $elig = inbox_domain_eligible($uid, $domain);
+    if (!isset($elig['ok'])) {
+        return $elig;
     }
 
     // Rate limit create per jam (berdasarkan trust tier)

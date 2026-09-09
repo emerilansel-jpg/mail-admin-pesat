@@ -35,11 +35,13 @@ curl -s -H "Authorization: Bearer $TEAK_EMAIL_API_KEY" \
 curl -s -X POST \
   -H "Authorization: Bearer $TEAK_EMAIL_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"domain":"jetdigitalpro.com","local_part":"my-inbox"}' \
+  -d '{"domain":"toohumid.com","local_part":"my-inbox"}' \
   https://teak.email/api/inboxes
 ```
 
-Pool domains: `jetdigitalpro.com`, `toohumid.com`, `jasa-seo.id`, `jdp.industries`
+Eligible domains (pool + your verified custom domains): `toohumid.com`, `jasa-seo.id`, `jdp.industries`, plus any verified custom domains from your account.
+Run `GET /api/domains` to see the `eligible` field with your full list.
+Note: `jetdigitalpro.com` is blocked for new inboxes.
 
 ### List Emails
 ```bash
@@ -112,7 +114,7 @@ H = {"Authorization": f"Bearer {API_KEY}"}
 
 # Create inbox
 r = requests.post(f"{BASE}/inboxes", headers=H,
-                   json={"domain":"jetdigitalpro.com","local_part":"test-123"})
+                   json={"domain":"toohumid.com","local_part":"test-123"})
 inbox = r.json()
 
 # List emails
@@ -132,7 +134,7 @@ const B = 'https://teak.email/api';
 
 const { email } = await fetch(`${B}/inboxes`, {
   method:'POST', headers:{...h,'Content-Type':'application/json'},
-  body: JSON.stringify({domain:'jetdigitalpro.com',local_part:'test-123'})
+  body: JSON.stringify({domain:'toohumid.com',local_part:'test-123'})
 }).then(r=>r.json());
 
 const {emails} = await fetch(`${B}/inboxes/${email}/emails`,{headers:h}).then(r=>r.json());

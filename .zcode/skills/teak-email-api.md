@@ -36,32 +36,33 @@ Response: `{"ok":true,"inboxes":[...]}`
 curl -s -X POST \
   -H "Authorization: Bearer $TEAK_EMAIL_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"domain":"jetdigitalpro.com","local_part":"my-inbox"}' \
+  -d '{"domain":"toohumid.com","local_part":"my-inbox"}' \
   https://teak.email/api/inboxes
 ```
-Response: `{"ok":true,"email":"my-inbox@jetdigitalpro.com","password":"abc123def456"}`
+Response: `{"ok":true,"email":"my-inbox@toohumid.com","password":"abc123def456"}`
 HTTP 201 on success.
 
-Available pool domains: `jetdigitalpro.com`, `toohumid.com`, `jasa-seo.id`, `jdp.industries`
+Eligible domains (pool + your verified custom): `toohumid.com`, `jasa-seo.id`, `jdp.industries`, plus any verified custom domains.
+Run `GET /api/domains` to see the `eligible` field. `jetdigitalpro.com` is blocked for new inboxes.
 
 ### List Emails in Inbox
 ```bash
 curl -s -H "Authorization: Bearer $TEAK_EMAIL_API_KEY" \
-  https://teak.email/api/inboxes/my-inbox@jetdigitalpro.com/emails
+  https://teak.email/api/inboxes/my-inbox@toohumid.com/emails
 ```
 Response: `{"ok":true,"inbox":{...},"emails":[{"uid":1,"from":"...","subject":"...","date":"..."}]}`
 
 ### Read Single Email
 ```bash
 curl -s -H "Authorization: Bearer $TEAK_EMAIL_API_KEY" \
-  https://teak.email/api/inboxes/my-inbox@jetdigitalpro.com/emails/1
+  https://teak.email/api/inboxes/my-inbox@toohumid.com/emails/1
 ```
 Response: `{"ok":true,"raw":"...full raw email content..."}`
 
 ### Extract OTP Code
 ```bash
 curl -s -H "Authorization: Bearer $TEAK_EMAIL_API_KEY" \
-  https://teak.email/api/inboxes/my-inbox@jetdigitalpro.com/otp/1
+  https://teak.email/api/inboxes/my-inbox@toohumid.com/otp/1
 ```
 Response: `{"ok":true,"otp":"123456","text":"Your verification code is: 123456..."}`
 
@@ -69,7 +70,7 @@ Response: `{"ok":true,"otp":"123456","text":"Your verification code is: 123456..
 ```bash
 curl -s -X DELETE \
   -H "Authorization: Bearer $TEAK_EMAIL_API_KEY" \
-  https://teak.email/api/inboxes/my-inbox@jetdigitalpro.com
+  https://teak.email/api/inboxes/my-inbox@toohumid.com
 ```
 Response: `{"ok":true}`
 
@@ -85,7 +86,7 @@ Response: `{"ok":true,"balance":25000,"tier":5}`
 curl -s -H "Authorization: Bearer $TEAK_EMAIL_API_KEY" \
   https://teak.email/api/domains
 ```
-Response: `{"ok":true,"domains":[...],"safe_domains":[...],"pool_domains":["jetdigitalpro.com",...]}`
+Response: `{"ok":true,"eligible":["toohumid.com",...],"pool_domains":["toohumid.com","jasa-seo.id","jdp.industries"],"custom_domains":["your-domain.com",...],"domains":[...],"safe_domains":[...],"summary":{...}}`
 
 ## Typical Agent Workflow (OTP Extraction)
 
@@ -126,7 +127,7 @@ HEADERS = {"Authorization": f"Bearer {API_KEY}"}
 
 # Create inbox
 r = requests.post(f"{BASE}/inboxes", headers=HEADERS,
-                   json={"domain": "jetdigitalpro.com", "local_part": "test-123"})
+                   json={"domain": "toohumid.com", "local_part": "test-123"})
 inbox = r.json()
 print(f"Created: {inbox['email']}")
 
@@ -151,7 +152,7 @@ const headers = { Authorization: `Bearer ${API_KEY}` };
 // Create inbox
 const res = await fetch(`${BASE}/inboxes`, {
   method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' },
-  body: JSON.stringify({ domain: 'jetdigitalpro.com', local_part: 'test-123' })
+  body: JSON.stringify({ domain: 'toohumid.com', local_part: 'test-123' })
 });
 const { email, password } = await res.json();
 console.log(`Created: ${email}`);

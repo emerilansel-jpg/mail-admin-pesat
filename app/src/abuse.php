@@ -43,8 +43,10 @@ function trust_limits(int $uid): array {
         1 => ['max_inboxes_per_hour' => 3,  'max_inboxes' => 5,  'max_api_per_hour' => 60],
         2 => ['max_inboxes_per_hour' => 5,  'max_inboxes' => 15, 'max_api_per_hour' => 120],
         3 => ['max_inboxes_per_hour' => 10, 'max_inboxes' => 999, 'max_api_per_hour' => 600],
+        4 => ['max_inboxes_per_hour' => 20, 'max_inboxes' => 999, 'max_api_per_hour' => 1200],
+        5 => ['max_inboxes_per_hour' => 50, 'max_inboxes' => 999, 'max_api_per_hour' => 3000],
     ];
-    return $map[$tier];
+    return $map[$tier] ?? $map[3];
 }
 
 /** Login lockout (5 fails → 5 min). Key: ip. Uses DB (no APCu dependency). */

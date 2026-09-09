@@ -19,6 +19,7 @@ $tier_info = tier_info($tier);
 $st_redeemed = db()->prepare('SELECT 1 FROM ia_codes WHERE redeemed_by = ?');
 $st_redeemed->execute([$uid]);
 $has_redeemed = (bool)$st_redeemed->fetch();
+$eligible = inbox_eligible_domains($uid);
 
 if (isset($_GET['delete'])) {
     $res = inbox_delete($uid, $_GET['delete']);
@@ -69,7 +70,7 @@ if ($new_email):
     <form method="post">
       <label>Domain</label>
       <select name="domain" required>
-        <?php foreach (cfg()['pool_domains'] as $d): ?>
+        <?php foreach ($eligible['all'] as $d): ?>
           <option><?= htmlspecialchars($d) ?></option>
         <?php endforeach; ?>
       </select>

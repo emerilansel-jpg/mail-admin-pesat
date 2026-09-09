@@ -1,5 +1,285 @@
 # Teak Email — Version History
 
+## User Tier 5 Upgrade: y3s@gmx.com — 2026-09-02
+
+### Status: COMPLETE — Upgrade applied, verified, no side effects
+
+### What Changed
+1. **Created Tier 5 redeem code** via SQL (format: `AS-` + 12 hex chars, tier=5, credits=25,000, source=admin)
+2. **Redeemed code for user y3s@gmx.com (ID=33)**: Added 25,000 credits to ia_credit_ledger (balance: 26,000 total)
+3. **Updated ia_users.trust_tier** from 1 to 5 for ID=33
+4. **Audit log entry created**: action=redeem, detail="tier=5 credits=25000"
+5. **Method**: Used existing redeem mechanism (ia_codes + ia_credit_ledger + ia_audit), not ad-hoc data corruption
+
+### Tier 5 Entitlements (from TIER_TABLE)
+| Field | Before (Tier 1) | After (Tier 5) |
+|-------|-----------------|----------------|
+| Credits | 1,000 | 26,000 (1,000 + 25,000) |
+| Inbox slots | 1 | 50 |
+| Domains | 1 | 10 |
+| API access | basic | full |
+| Retention | 7 days | 60 days |
+| Rate limits | 60 API/hr | 3,000 API/hr |
+
+### Verification (All PASS)
+- trust_tier = 5
+- Credit balance = 26,000
+- Ledger: 2 entries (Tier 1 + Tier 5), both with correct balance_after
+- Codes: 2 redeemed by user 33 (no duplicates, no corruption)
+- Audit trail: Complete signup -> verify -> login -> redeem -> login -> redeem flow
+- Other users (IDs 3, 34, 35): unchanged
+- PHP syntax: redeem.php, credits.php, abuse.php all pass
+- Endpoints: landing (200), API (401), login (200) all healthy
+
+### Data Preserved
+- All API keys (1 active, 3 revoked)
+- All inboxes (0)
+- All user domains (0)
+- No passwords created or exposed
+
+### Files Changed
+- None (database-only operation via SSH + MySQL)
+- Documentation: `coldstart/coldstart.md`, `VERSIONS.md` updated
+
+---
+
+## Beginner-Friendly AI Agent Documentation Rewrite — 2026-09-02
+
+### Status: COMPLETE — Deployed and verified
+
+### What Changed
+1. **`mcp_setup.php` — Full rewrite**: Now the primary documentation hub for connecting AI agents. Replaced the old minimal config page with a comprehensive beginner-friendly guide.
+2. **`api_keys.php` — AI agent section rewrite**: Replaced the old "4-step flow" (which did not explain what Teak Email is or how to connect) with a clean "MCP (Recommended)" vs "REST API" card layout linking to the full guide.
+3. **"Choose your app" section**: Numbered, app-specific setup instructions for:
+   - **Claude Desktop**: Where to find MCP settings (macOS/Windows), exact JSON config, restart instructions, test prompt
+   - **Cursor**: Settings > MCP path, exact config, test prompt, note about UI label variations
+   - **Windsurf/Other MCP clients**: Generic config, test prompt
+   - **ZCode**: Explanation that this environment cannot inherit browser API key; two options (env var or MCP client config)
+   - **REST API (curl)**: Complete 6-step copy-paste flow with toohumid.com
+4. **API key explanation**: Clear distinction between API key (for code, starts with `cib_`, created in API Keys tab, shown once) and inbox password (for IMAP/POP3, random string, different from API key).
+5. **Troubleshooting section**: 5 common symptoms with exact fixes:
+   - "Agent says it cannot connect" (npx not installed, wrong config, restart needed)
+   - "401 Unauthorized" (key missing/invalid/revoked)
+   - "Domain not available" (use pool domains, check eligibility)
+   - "No emails yet" (check sending service, wait 30s)
+   - "MCP server not found" (Node.js version, npm network, JSON format)
+6. **Copy buttons**: All code blocks have copy-to-clipboard buttons.
+7. **Mobile-friendly CSS**: Uses existing dark theme patterns, responsive grid layouts.
+8. **Safe domains only**: All examples use `toohumid.com` (pool domain). Zero references to `jetdigitalpro.com`.
+
+### UX Before/After
+
+| Aspect | Before | After |
+|--------|--------|-------|
+| Point 2 clarity | "Tell your agent what to do" — no explanation of what app, how to connect, MCP vs API | Full "Choose your app" section with 5 app-specific numbered guides |
+| What is Teak Email | Not explained on these pages | Hero section: "Teak Email gives you temporary email inboxes" |
+| MCP vs API | Mentioned but not explained | Large recommendation card + two-tab layout with clear distinction |
+| App-specific setup | Generic JSON only | Separate sections for Claude Desktop, Cursor, Windsurf, ZCode with exact paths |
+| API key explanation | "Copy it now" — no context | Full explanation: what it is, where to create it, shown once, difference from inbox password |
+| Domain examples | Some used jetdigitalpro.com (blocked) | All use toohumid.com (safe pool domain) |
+| Troubleshooting | 5 items on api_keys.php only | 5 items with exact symptoms and fixes on mcp_setup.php |
+| Copy functionality | No copy buttons | Copy buttons on all code blocks |
+| Beginner flow | Confusing — user doesn't know what MCP is or which app to use | Clear: "Not sure? Choose MCP." Then pick your app from numbered list |
+
+### Supported Clients (Verified)
+
+| Client | Status | Config Path | Notes |
+|--------|--------|-------------|-------|
+| Claude Desktop | SUPPORTED | Settings > Developer > Edit Config | MCP loads on startup; must restart after config change |
+| Cursor | SUPPORTED | Settings > MCP | UI labels may vary ("MCP Servers", "Tools & MCP") |
+| Windsurf | SUPPORTED (generic) | Settings > MCP | Same JSON config format; exact UI path may vary |
+| ZCode | PARTIAL | Env var or MCP client | Cannot inherit browser API key; must set `TEAK_EMAIL_API_KEY` or configure MCP client |
+| curl/Python/Node.js | SUPPORTED | N/A (REST API) | Bearer token auth; full endpoint coverage |
+
+### Files Changed
+- `app/public/mcp_setup.php` — Full rewrite (~350 lines, was ~120 lines)
+- `app/public/api_keys.php` — AI agent section rewritten (lines 64-293 replaced)
+- `VERSIONS.md` — This entry
+- `coldstart/coldstart.md` — This entry
+
+### Test Results
+| # | Test | Result |
+|---|------|--------|
+| 1 | PHP syntax (mcp_setup.php) | PASS |
+| 2 | PHP syntax (api_keys.php) | PASS |
+| 3 | Landing page | 200 |
+| 4 | API (unauth) | 401 |
+| 5 | API keys page (unauth) | 302 (redirect to login) |
+| 6 | MCP setup page (unauth) | 302 (redirect to login) |
+| 7 | 404 test | Custom 404 page |
+| 8 | Security headers (5/5) | PASS |
+| 9 | YOUR_API_KEY placeholders (mcp_setup.php) | 10 occurrences (correct) |
+| 10 | toohumid.com in examples (mcp_setup.php) | 9 occurrences (correct) |
+| 11 | jetdigitalpro.com references | 0 in both files (correct) |
+| 12 | Claude Desktop section | Present |
+| 13 | Cursor section | Present |
+| 14 | Windsurf section | Present |
+| 15 | ZCode section | Present |
+| 16 | Troubleshooting section | Present |
+| 17 | Copy buttons on code blocks | Present |
+
+### Deployment
+- Pre-deploy backup: `/var/www/inboxapp/public/{mcp_setup,api_keys}.php.bak-20260902-*`
+- Deploy: SCP both files to `/var/www/inboxapp/public/`
+- PHP syntax: BOTH PASS on server
+- No service restart needed (opcache validates timestamps)
+
+### Remaining Limitations
+- ZCode cannot automatically inherit browser API key (environment limitation)
+- MCP server package `codeinbox-mcp` must be available via npx (requires Node.js 18+)
+- Some corporate networks block npm registry (MCP setup will fail)
+- Cursor UI labels change frequently; documentation may need periodic updates
+
+---
+
+## Domain Eligibility Fix + jetdigitalpro.com Rejection — 2026-09-02
+
+### Status: COMPLETE — Deployed and verified
+
+### What Changed
+1. **Domain eligibility helper** (`app/src/inbox.php`): New `inbox_domain_eligible()` function validates domain eligibility for inbox creation. A domain is eligible when: (a) it is NOT in `INBOX_BLOCKED_DOMAINS`, (b) it is active in Mailcow, and (c) it is either in the shared pool OR a verified user-owned domain in `ia_user_domains`.
+2. **Blocked domain list**: `INBOX_BLOCKED_DOMAINS = ['jetdigitalpro.com']` — permanently excluded from new inbox creation. Existing mailboxes on jetdigitalpro.com are untouched.
+3. **`inbox_eligible_domains()`**: Returns pool + custom verified domains (excluding blocked) for API/UI use.
+4. **`inbox_create()` updated**: Uses `inbox_domain_eligible()` instead of raw `in_array(pool_domains)`. Now supports user-owned verified custom domains for inbox creation.
+5. **`config.php`**: Removed `jetdigitalpro.com` from `pool_domains` array (3 pool domains remain: toohumid.com, jasa-seo.id, jdp.industries).
+6. **API `GET /api/domains`**: New `eligible` field shows all domains a user can actually create inboxes on. `pool_domains` and `custom_domains` fields added for clarity.
+7. **UI dropdown** (`app/public/inboxes.php`): Shows eligible domains (pool + verified custom) instead of only pool_domains.
+8. **API Keys documentation** (`app/public/api_keys.php`): Updated Tier 1 domain section to explain shared pool vs custom domains. Updated error guidance for "Domain not available".
+9. **Bug fix** (`app/src/abuse.php`): Added tiers 4 and 5 to `trust_limits()` map. Tier 5 users (n311311@gmail.com) were getting a fatal TypeError because the map only had tiers 1-3.
+
+### Eligibility Behavior
+- **Pool domains** (excluding jetdigitalpro.com): toohumid.com, jasa-seo.id, jdp.industries — available to all users
+- **User-owned domains**: Any domain in `ia_user_domains` with status=verified and classification=safe — available to the domain owner only
+- **Blocked domains**: jetdigitalpro.com — rejected for all new inboxes, existing data untouched
+- **Arbitrary domains**: Rejected — must be in pool or verified user-owned
+
+### E2E Test Results
+| # | Test | Result |
+|---|------|--------|
+| 1 | List eligible domains (jetdigitalpro excluded) | PASS — 37 eligible (3 pool + 34 custom) |
+| 2 | Reject jetdigitalpro.com for inbox creation | PASS — "This domain is not available for new inboxes" |
+| 3 | Create inbox on pool domain (toohumid.com) | PASS |
+| 4 | Internal email delivery + list/read/OTP | PASS — OTP 987654 extracted correctly |
+| 5 | Create inbox on user-owned custom domain (aerisresearch.com) | PASS |
+| 6 | Reject arbitrary domain not in pool or user domains | PASS — "Domain is not configured on the mail server" |
+| 7 | Test data cleanup | PASS — 0 active inboxes, test API key revoked |
+
+### Files Changed
+- `app/src/inbox.php` — Added `INBOX_BLOCKED_DOMAINS`, `inbox_domain_eligible()`, `inbox_eligible_domains()`; updated `inbox_create()` to use eligibility helper
+- `app/src/config.php` — Removed `jetdigitalpro.com` from `pool_domains`
+- `app/src/abuse.php` — Added tiers 4 and 5 to `trust_limits()` map with fallback to tier 3
+- `app/public/api.php` — Updated `GET /api/domains` to return `eligible`, `pool_domains`, `custom_domains` fields
+- `app/public/inboxes.php` — Updated dropdown to show `inbox_eligible_domains()` instead of `pool_domains`
+- `app/public/api_keys.php` — Updated Tier 1 domain section and error guidance
+
+### Deployment
+- Pre-deploy backup: `/root/backups/domain-eligibility-20260902-*`
+- Deploy: SCP 6 files to `/var/www/inboxapp/{src,public}/`
+- PHP lint: ALL 6 files PASS
+- No service restart needed (opcache validates timestamps)
+
+---
+
+## AI Agent Documentation on API Keys Page — 2026-09-02
+
+### Status: COMPLETE — Deployed and verified
+
+### What Changed
+1. **API Keys page (`api_keys.php`)** — Added prominent "Use Teak Email with an AI Agent" section below key management cards
+2. **4-step numbered flow**: Generate API key, tell agent what to do, agent calls API, get OTP/read email
+3. **Copy-paste curl examples** with placeholder `YOUR_API_KEY`: list domains, create inbox, list emails, read email, extract OTP
+4. **Tier 1 entitlements section** pulled from actual `TIER_TABLE` code: 1,000 credits, 1 inbox slot, 1 domain, basic API, 7-day retention
+5. **Domain availability**: Shows toohumid.com, jasa-seo.id, jdp.industries as available pool domains. jetdigitalpro.com excluded from pool (now blocked for new inboxes per domain eligibility fix)
+6. **Error guidance** with 5 common issues: Unauthorized (401), Domain not available, Inbox slot limit, No emails yet, Not enough credits — each with fix instructions
+7. **Security notice**: API key shown once, keep private, revoke if compromised
+8. **Helpful links**: Getting Started, My Inboxes, support@teak.email
+
+### Endpoints Documented (live, Nginx-routed)
+- `GET /api/domains` — list available domains
+- `POST /api/inboxes` — create inbox `{domain, local_part}`
+- `GET /api/inboxes` — list inboxes
+- `GET /api/inboxes/{email}/emails` — list emails
+- `GET /api/inboxes/{email}/emails/{uid}` — read email
+- `GET /api/inboxes/{email}/otp/{uid}` — extract OTP
+- `GET /api/balance` — check credit balance
+
+### Route Consistency
+- All routes use `/api/*` (Nginx routes to `api.php` with PATH_INFO)
+- No `/api.php/inboxes` endpoint exists — the old form is not documented
+- Nginx config: `location ~ ^/api(/.*)?$ { fastcgi_param SCRIPT_FILENAME $document_root/api.php; fastcgi_param PATH_INFO $1; }`
+
+### Tier 1 Entitlements (from TIER_TABLE in `app/src/redeem.php`)
+| Field | Value |
+|-------|-------|
+| Credits | 1,000 |
+| Inbox slots | 1 |
+| Domains | 1 (choose from pool) |
+| API access | basic |
+| Retention | 7 days |
+
+### Pool Domains (production, `app/src/config.php`)
+- toohumid.com
+- jasa-seo.id
+- jdp.industries
+
+### What is NOT documented (actual limitations)
+- **Domain creation**: Users cannot create custom domains via API. Only pool domains are available for inbox creation. `inbox_create()` validates against `pool_domains`, not user-scoped custom domains.
+- **Domain sync**: `POST /api/domains/sync` exists but requires server-side Spaceship credentials (not available to Tier 1 users without admin configuration)
+
+### Files Changed
+- `app/public/api_keys.php` — Added ~180 lines of documentation HTML (AI agent section, curl examples, Tier 1 details, error guidance, links)
+
+### Test Results
+| # | Test | Result |
+|---|------|--------|
+| 1 | PHP syntax (deployed file) | PASS |
+| 2 | Landing page | 200 |
+| 3 | Login page | 200 |
+| 4 | Signup page | 200 |
+| 5 | API (unauth) | 401 |
+| 6 | API balance (unauth) | 401 |
+| 7 | API domains (unauth) | 401 |
+| 8 | 404 page | 404 |
+| 9 | Privacy | 200 |
+| 10 | Terms | 200 |
+| 11 | API keys page (unauth) | 302 (redirect to login) |
+| 12 | Security headers (5/5) | PASS |
+| 13 | OG tags (5/5) | PASS |
+| 14 | jetdigitalpro.com in domain badges | 0 occurrences (correctly excluded) |
+| 15 | YOUR_API_KEY placeholders | 9 occurrences (correct) |
+
+### Deployment
+- Pre-deploy backup: `/var/www/inboxapp/public/api_keys.php.bak-20260902-*`
+- Deploy: SCP api_keys.php to `/var/www/inboxapp/public/`
+- PHP syntax: PASS
+- Opcache: validates timestamps (no restart needed)
+
+---
+
+## Tier 1 Redeem Code Created — 2026-09-02
+
+### Status: COMPLETE
+
+### What Changed
+1. Investigated cheapest tier from code/schema: **Tier 1** (1,000 credits, 1 inbox slot, 1 domain, basic API, 7-day retention)
+2. Confirmed y3s@gmx.com (ID=33) exists, active, verified, zero credits, no codes redeemed
+3. Generated one Tier 1 redeem code via same mechanism as `generate_codes()`: `AS-` + 12 cryptographically random hex chars
+4. Code ID: 5, Status: unused, Source: admin
+5. Verified: code exists, unused, unique (2 total codes in DB, both unique), Tier 1 entitlements correct
+6. No code was redeemed -- left for normal redemption flow at `/redeem.php`
+
+### Account: y3s@gmx.com
+- ID: 33, Status: active, Trust tier: 1, Verified: yes, Credits: 0, Codes redeemed: 0
+
+### Tier 1 Entitlements
+- 1,000 credits, 1 inbox slot, 1 domain, basic API, 7-day retention
+
+### Documentation
+- `coldstart/coldstart.md` updated with full record (code value redacted in docs)
+- `VERSIONS.md` updated (this entry)
+
+---
+
 ## Git Repository Initialized — 2026-09-02
 
 ### Status: LOCAL COMMIT COMPLETE — Push pending
